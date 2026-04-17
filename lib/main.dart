@@ -15,9 +15,13 @@ import 'services/medusa_service.dart';
 import 'services/pushup_counter_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
-void main() => runApp(const SideQuestApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const SideQuestApp());
+}
 
 /* ========================= SPLASH ========================= */
 

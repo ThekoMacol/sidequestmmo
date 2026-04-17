@@ -28,10 +28,9 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-  flutter_svg: ^2.0.9
   flutter:
     sdk: flutter
-
+  flutter_svg: ^2.0.9
   url_launcher: ^6.3.0
   pedometer: ^4.1.1
   permission_handler: ^11.3.1
@@ -43,6 +42,7 @@ dependencies:
   light: 4.1.0
   camera: ^0.11.0+2
   wakelock_plus: ^1.2.8
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

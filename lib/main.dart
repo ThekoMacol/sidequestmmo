@@ -465,7 +465,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
         AppLang.en: 'Nothing completed yet'
       },
       'shop': {AppLang.de: 'Shop', AppLang.en: 'Shop'},
-      'yourLevel': {AppLang.de: 'Dein Level', AppLang.en: 'Your Level'},
+      'yourLevel': {AppLang.de: 'Erfahrungspunkte', AppLang.en: 'Experience'},
       'aboutLine': {
         AppLang.de: '2025 by Kornelius E. Thelen',
         AppLang.en: '2025 by Kornelius E. Thelen'
@@ -2208,7 +2208,20 @@ final hunt = MedusaService.huntForAdventure(pinned, adventure.id);
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(tr('yourLevel'), style: const TextStyle(fontWeight: FontWeight.w700)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(tr('yourLevel'), style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                'Level $appLevel',
+                style: GoogleFonts.cinzel(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFC9A84C),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 6),
           _progressBar(pct),
         ],

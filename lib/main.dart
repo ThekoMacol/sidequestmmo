@@ -185,12 +185,21 @@ class _SideQuestHomeState extends State<SideQuestHome>
   int athletePoints = 0;
   int adventurerPoints = 0;
 
+  // Stats
+  double health = 100;
+  double maxHealth = 100;
+  double stamina = 100;
+  double maxStamina = 100;
+  double mana = 100;
+  double maxMana = 100;
+
   // App XP
   int appLevel = 1;
   double appXp = 0;
   double appXpNeeded = 60;
 
   bool _showCreator = false;
+  bool _showCharacter = false;
 
   // Cooldowns
   DateTime? _lastPushupAcceptAt;
@@ -236,6 +245,9 @@ class _SideQuestHomeState extends State<SideQuestHome>
     prefs.setBool('destinyStyle', _destinyStyle);
     prefs.setBool('destinyPurchased', _destinyPurchased);
     prefs.setInt('lang', _lang.index);
+    prefs.setDouble('health', health);
+    prefs.setDouble('stamina', stamina);
+    prefs.setDouble('mana', mana);
     if (_lastPushupAcceptAt != null) {
       prefs.setInt('lastPushupAcceptAt', _lastPushupAcceptAt!.millisecondsSinceEpoch);
     }
@@ -262,6 +274,9 @@ class _SideQuestHomeState extends State<SideQuestHome>
       _xpBarGreen = prefs.getBool('xpBarGreen') ?? false;
       _destinyStyle = prefs.getBool('destinyStyle') ?? false;
       _destinyPurchased = prefs.getBool('destinyPurchased') ?? false;
+      health = prefs.getDouble('health') ?? 100;
+      stamina = prefs.getDouble('stamina') ?? 100;
+      mana = prefs.getDouble('mana') ?? 100;
       final langIndex = prefs.getInt('lang') ?? 0;
       _lang = AppLang.values[langIndex];
       final pushupMs = prefs.getInt('lastPushupAcceptAt');
@@ -422,6 +437,10 @@ class _SideQuestHomeState extends State<SideQuestHome>
   String tr(String key) {
     final m = <String, Map<AppLang, String>>{
       'sidequest': {AppLang.de: '📜 SideQuest', AppLang.en: '📜 SideQuest'},
+      'character': {AppLang.de: 'Held', AppLang.en: 'Hero'},
+      'health': {AppLang.de: 'Gesundheit', AppLang.en: 'Health'},
+      'stamina': {AppLang.de: 'Ausdauer', AppLang.en: 'Stamina'},
+      'mana': {AppLang.de: 'Mana', AppLang.en: 'Mana'},
       'newQuest': {AppLang.de: 'Neue Quest', AppLang.en: 'New Quest'},
       'skills': {AppLang.de: 'Fähigkeiten', AppLang.en: 'Skills'},
       'dailyQuest': {AppLang.de: 'Daily Quest', AppLang.en: 'Daily Quest'},
@@ -1738,10 +1757,10 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                               const SizedBox(width: 6),
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: _openSkills,
+                                  onPressed: () => setState(() => _showCharacter = !_showCharacter),
                                   style: _stdBtn(),
                                   child: Text(
-                                    tr('skills'),
+                                    _showCharacter ? '${tr('character')} ▾' : '${tr('character')} ▸',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
@@ -1812,6 +1831,89 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                               ),
                             ),
                             crossFadeState: _showCreator
+                                ? CrossFadeState.showSecond
+                                : CrossFadeState.showFirst,
+                            duration: const Duration(milliseconds: 180),
+                          ),
+                          AnimatedCrossFade(
+                            firstChild: const SizedBox.shrink(),
+                            secondChild: Padding(
+                              padding: const EdgeInsets.only(top: 10, bottom: 2),
+                              child: Container(
+                                decoration: _paper(),
+                                padding: const EdgeInsets.all(12),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    // Health
+                                    Text(tr('health'), style: GoogleFonts.cinzel(
+                                        fontSize: 12, color: const Color(0xFFE06060), fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 4),
+                                    FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: 0.5,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: LinearProgressIndicator(
+                                          value: (health / maxHealth).clamp(0.0, 1.0),
+                                          minHeight: 10,
+                                          backgroundColor: Colors.black26,
+                                          valueColor: const AlwaysStoppedAnimation(Color(0xFFE06060)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    // Stamina
+                                    Text(tr('stamina'), style: GoogleFonts.cinzel(
+                                        fontSize: 12, color: const Color(0xFFFFD060), fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 4),
+                                    FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: 0.5,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: LinearProgressIndicator(
+                                          value: (stamina / maxStamina).clamp(0.0, 1.0),
+                                          minHeight: 10,
+                                          backgroundColor: Colors.black26,
+                                          valueColor: const AlwaysStoppedAnimation(Color(0xFFFFD060)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    // Mana
+                                    Text(tr('mana'), style: GoogleFonts.cinzel(
+                                        fontSize: 12, color: const Color(0xFF9060E0), fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 4),
+                                    FractionallySizedBox(
+                                      alignment: Alignment.centerLeft,
+                                      widthFactor: 0.5,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(6),
+                                        child: LinearProgressIndicator(
+                                          value: (mana / maxMana).clamp(0.0, 1.0),
+                                          minHeight: 10,
+                                          backgroundColor: Colors.black26,
+                                          valueColor: const AlwaysStoppedAnimation(Color(0xFF9060E0)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    // Skills
+                                    Text(tr('skills'), style: GoogleFonts.cinzel(
+                                        fontSize: 12, color: const Color(0xFFC9A84C), fontWeight: FontWeight.w600)),
+                                    const SizedBox(height: 6),
+                                    Text('📘 ${_lang == AppLang.de ? 'Gelehrter' : 'Scholar'}: $scholarPoints/100',
+                                        style: GoogleFonts.crimsonPro(fontSize: 13, color: const Color(0xFFE8D9B8))),
+                                    Text('💪 ${_lang == AppLang.de ? 'Athlet' : 'Athlete'}: $athletePoints/100',
+                                        style: GoogleFonts.crimsonPro(fontSize: 13, color: const Color(0xFFE8D9B8))),
+                                    Text('🏔️ ${_lang == AppLang.de ? 'Abenteurer' : 'Adventurer'}: $adventurerPoints/100',
+                                        style: GoogleFonts.crimsonPro(fontSize: 13, color: const Color(0xFFE8D9B8))),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            crossFadeState: _showCharacter
                                 ? CrossFadeState.showSecond
                                 : CrossFadeState.showFirst,
                             duration: const Duration(milliseconds: 180),

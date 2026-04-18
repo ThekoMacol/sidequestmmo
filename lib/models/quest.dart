@@ -14,7 +14,7 @@ class Quest {
   bool readingUsesDefaultName;
 
   // Pushups
-  int level; // 0 => 10 reps … 99 => 1000 reps
+  int level;
   int repsProgress;
 
   // Adventure/Medusa
@@ -22,27 +22,23 @@ class Quest {
   int stepsProgress;
   DateTime? startAt;
   DateTime? endAt;
-  DateTime? dayKey; // yyyy-mm-dd
+  DateTime? dayKey;
   int? deviceBaseline;
 
   // Locks/State
-  DateTime? unlockAt; // für Pushups
+  DateTime? unlockAt;
   bool done;
 
-  // Abschluss-Zeitstempel (für „letzte 24h“)
   DateTime? finishedAt;
 
-  // Medusa-Flag (für "Bildschirm aus"-Medusa)
   bool medusaArmed;
 
-  // Ergebnis / Fail-Handling
   bool failed;
   String? failReason;
 
-  // Medusa Hunt Link / Bonus
-  String? linkedQuestId; // verbindet Hunt mit Adventure
-  int bonusGold; // z.B. 25
-  bool bonusAwarded; // Bonus nur 1x
+  String? linkedQuestId;
+  int bonusGold;
+  bool bonusAwarded;
 
   Quest.reading({
     required this.name,
@@ -126,9 +122,6 @@ class Quest {
         bonusGold = 0,
         bonusAwarded = false;
 
-  /// Medusa:
-  /// - classic (screen-off): linkedQuestId == null, medusaArmed true
-  /// - hunt (bonus): linkedQuestId != null
   Quest.medusa({
     required this.name,
     required DateTime start,
@@ -155,6 +148,72 @@ class Quest {
         linkedQuestId = null,
         bonusGold = 0,
         bonusAwarded = false;
+
+  // ── Private constructor for fromJson ──
+  Quest._fromJson(Map<String, dynamic> j)
+      : id = j['id'] as String,
+        type = QuestType.values[j['type'] as int],
+        name = j['name'] as String,
+        totalPages = j['totalPages'] as int?,
+        readPages = j['readPages'] as int? ?? 0,
+        readingUsesDefaultName = j['readingUsesDefaultName'] as bool? ?? false,
+        level = j['level'] as int? ?? 0,
+        repsProgress = j['repsProgress'] as int? ?? 0,
+        stepsTarget = j['stepsTarget'] as int? ?? 0,
+        stepsProgress = j['stepsProgress'] as int? ?? 0,
+        startAt = j['startAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(j['startAt'] as int)
+            : null,
+        endAt = j['endAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(j['endAt'] as int)
+            : null,
+        dayKey = j['dayKey'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(j['dayKey'] as int)
+            : null,
+        deviceBaseline = j['deviceBaseline'] as int?,
+        unlockAt = j['unlockAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(j['unlockAt'] as int)
+            : null,
+        done = j['done'] as bool? ?? false,
+        finishedAt = j['finishedAt'] != null
+            ? DateTime.fromMillisecondsSinceEpoch(j['finishedAt'] as int)
+            : null,
+        medusaArmed = j['medusaArmed'] as bool? ?? false,
+        failed = j['failed'] as bool? ?? false,
+        failReason = j['failReason'] as String?,
+        linkedQuestId = j['linkedQuestId'] as String?,
+        bonusGold = j['bonusGold'] as int? ?? 0,
+        bonusAwarded = j['bonusAwarded'] as bool? ?? false;
+
+  // ── toJson ──
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'type': type.index,
+    'name': name,
+    'totalPages': totalPages,
+    'readPages': readPages,
+    'readingUsesDefaultName': readingUsesDefaultName,
+    'level': level,
+    'repsProgress': repsProgress,
+    'stepsTarget': stepsTarget,
+    'stepsProgress': stepsProgress,
+    'startAt': startAt?.millisecondsSinceEpoch,
+    'endAt': endAt?.millisecondsSinceEpoch,
+    'dayKey': dayKey?.millisecondsSinceEpoch,
+    'deviceBaseline': deviceBaseline,
+    'unlockAt': unlockAt?.millisecondsSinceEpoch,
+    'done': done,
+    'finishedAt': finishedAt?.millisecondsSinceEpoch,
+    'medusaArmed': medusaArmed,
+    'failed': failed,
+    'failReason': failReason,
+    'linkedQuestId': linkedQuestId,
+    'bonusGold': bonusGold,
+    'bonusAwarded': bonusAwarded,
+  };
+
+  // ── fromJson ──
+  static Quest fromJson(Map<String, dynamic> j) => Quest._fromJson(j);
 
   static String _uid() => Random().nextInt(1 << 32).toRadixString(16);
 }

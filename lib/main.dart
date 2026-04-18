@@ -16,6 +16,7 @@ import 'services/pushup_counter_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 
 void main() async {
@@ -241,6 +242,11 @@ class _SideQuestHomeState extends State<SideQuestHome>
     if (_lastDailyClaimAt != null) {
       prefs.setInt('lastDailyClaimAt', _lastDailyClaimAt!.millisecondsSinceEpoch);
     }
+    // Quests speichern
+    final pinnedJson = pinned.map((q) => jsonEncode(q.toJson())).toList();
+    final completedJson = completed.map((q) => jsonEncode(q.toJson())).toList();
+    prefs.setStringList('pinned', pinnedJson);
+    prefs.setStringList('completed', completedJson);
   }
 
   Future<void> _loadData() async {
@@ -266,6 +272,13 @@ class _SideQuestHomeState extends State<SideQuestHome>
       if (dailyMs != null) {
         _lastDailyClaimAt = DateTime.fromMillisecondsSinceEpoch(dailyMs);
       }
+      // Quests laden
+      final pinnedRaw = prefs.getStringList('pinned') ?? [];
+      final completedRaw = prefs.getStringList('completed') ?? [];
+      pinned.clear();
+      completed.clear();
+      pinned.addAll(pinnedRaw.map((s) => Quest.fromJson(jsonDecode(s))));
+      completed.addAll(completedRaw.map((s) => Quest.fromJson(jsonDecode(s))));
     });
   }
 
@@ -1783,36 +1796,7 @@ return Scaffold(
                           if (pinned.isEmpty) _emptyCard(tr('nonePinned')),
                           ...pinned.map(_questCard),
                           const SizedBox(height: 12),
-                          Text(tr('completed'),
-                              style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 6),
-                          Builder(
-                            builder: (context) {
-                              final cutoff = DateTime.now().subtract(const Duration(hours: 24));
-                              final recent = completed.where((q) {
-                                final ts = q.finishedAt ??
-                                    q.endAt ??
-                                    q.dayKey ??
-                                    DateTime.fromMillisecondsSinceEpoch(0);
-                                return ts.isAfter(cutoff);
-                              }).toList();
 
-                              if (recent.isEmpty) return _emptyCard(tr('noneCompleted'));
-
-                              return Column(
-                                children: recent
-                                    .map((q) => Opacity(
-                                  opacity: 0.6,
-                                  child: ColorFiltered(
-                                    colorFilter: const ColorFilter.mode(
-                                        Colors.grey, BlendMode.saturation),
-                                    child: _questCard(q, locked: true),
-                                  ),
-                                ))
-                                    .toList(),
-                              );
-                            },
-                          ),
                           const SizedBox(height: 24),
                         ],
                       ),

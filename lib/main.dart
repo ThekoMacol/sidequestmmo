@@ -17,6 +17,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'services/mothman_service.dart';
 
 
 void main() async {
@@ -177,6 +178,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
   final List<Quest> pinned = [];
   final List<Quest> completed = [];
 
+
   // HUD
   int gold = 0;
 
@@ -230,6 +232,11 @@ class _SideQuestHomeState extends State<SideQuestHome>
   StreamSubscription<int>? _pushupSub;
   bool _pushupCounting = false;
   String? _pushupQuestIdRunning; // ✅ welche Pushup-Quest zählt gerade?
+
+  // Mothman Service
+  final _mothmanService = MothmanService();
+
+
 
   //Save and Load
   Future<void> _saveData() async {
@@ -312,7 +319,23 @@ class _SideQuestHomeState extends State<SideQuestHome>
       print('Loaded pinned: ${pinned.length} quests');
       print('Loaded completed: ${completed.length} quests');
     });
+
+    final activeMothman = MothmanService.activeMothmanOrNull(pinned);
+    if (activeMothman != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _mothmanService.start(
+          quest: activeMothman,
+          onFail: (q, reason) {
+            _failQuest(q, reason: reason);
+            _toast(_lang == AppLang.de
+                ? '🦋 Mottenmann fehlgeschlagen — zu viel Bewegung!'
+                : '🦋 Mothman failed — too much movement!');
+          },
+        );
+      });
+    }
   }
+
 
   //Push up Sensor
   Future<void> _startPushupSensorForQuest(Quest q) async {
@@ -659,6 +682,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
     _midnightTimer?.cancel();
 
     _stopPushupSensor(silent: true);
+    _mothmanService.dispose();
     _pushupCounter?.dispose(); // stream controller schließen
     _pushupCounter = null;
     WakelockPlus.disable();
@@ -1257,6 +1281,15 @@ class _SideQuestHomeState extends State<SideQuestHome>
         start: now,
         end: end,
       ));
+      _mothmanService.start(
+        quest: pinned.last,
+        onFail: (q, reason) {
+          _failQuest(q, reason: reason);
+          _toast(_lang == AppLang.de
+              ? '🦋 Mottenmann fehlgeschlagen — zu viel Bewegung!'
+              : '🦋 Mothman failed — too much movement!');
+        },
+      );
       _showCreator = false;
     });
     _saveData();

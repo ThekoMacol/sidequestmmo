@@ -1684,16 +1684,25 @@ class _SideQuestHomeState extends State<SideQuestHome>
 
 final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
 
-return Scaffold(
+    return Scaffold(
       backgroundColor: _bgColor,
       body: Stack(
         children: [
+          // Hintergrundbild
+          Positioned.fill(
+            child: Image.asset(
+              DateTime.now().hour >= 21 || DateTime.now().hour < 6
+                  ? 'assets/images/bg_main_night.png'
+                  : 'assets/images/bg_main_day.png',
+              fit: BoxFit.cover,
+            ),
+          ),
           // Haupt UI
           Center(
             child: AspectRatio(
               aspectRatio: 9 / 16,
               child: Material(
-                color: _surfaceColor,
+                color: Colors.transparent,
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -1929,7 +1938,7 @@ return Scaffold(
   );
 
   BoxDecoration _paper() => BoxDecoration(
-    color: _paperColor,
+    color: _paperColor.withOpacity(0.75),
     border: Border.all(
       color: _destinyStyle
           ? const Color(0xFF2B3A73)
@@ -2177,11 +2186,11 @@ final hunt = MedusaService.huntForAdventure(pinned, adventure.id);
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _destinyStyle ? const Color(0xFF151B37) : const Color(0xFF120E08),
+        color: _destinyStyle ? const Color(0xFF151B37).withOpacity(0.85) : const Color(0xFF120E08).withOpacity(0.85),
         border: Border(top: BorderSide(
           color: _destinyStyle
-              ? const Color(0xFF2B3A73)
-              : const Color(0xFFC9A84C).withOpacity(0.2),
+              ? const Color(0xFF151B37).withOpacity(0.85)
+              : Colors.black.withOpacity(0.6),
         )),
       ),
       child: Column(

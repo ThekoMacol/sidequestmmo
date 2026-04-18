@@ -260,6 +260,20 @@ class _SideQuestHomeState extends State<SideQuestHome>
     prefs.setStringList('pinned', pinnedJson);
     prefs.setStringList('completed', completedJson);
   }
+  bool _hasEnoughStats({double health = 0, double stamina = 0, double mana = 0}) {
+    return this.health >= health &&
+        this.stamina >= stamina &&
+        this.mana >= mana;
+  }
+
+  void _spendStats({double health = 0, double stamina = 0, double mana = 0}) {
+    setState(() {
+      this.health = (this.health - health).clamp(0, maxHealth);
+      this.stamina = (this.stamina - stamina).clamp(0, maxStamina);
+      this.mana = (this.mana - mana).clamp(0, maxMana);
+    });
+    _saveData();
+  }
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -425,8 +439,8 @@ class _SideQuestHomeState extends State<SideQuestHome>
     final vy = (dy / dtMs) * 1000.0; // px/s
 
     // Swipe UP: dy negativ
-    final isSwipeUp = dy < -120 && vy < -800;
-    if (isSwipeUp) _openHistory();
+    // final isSwipeUp = dy < -120 && vy < -800;
+    // if (isSwipeUp) _openHistory();
 
     _swipeDownY = null;
     _swipeDownMs = null;
@@ -437,6 +451,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
   String tr(String key) {
     final m = <String, Map<AppLang, String>>{
       'sidequest': {AppLang.de: '📜 SideQuest', AppLang.en: '📜 SideQuest'},
+
       'character': {AppLang.de: 'Held', AppLang.en: 'Hero'},
       'health': {AppLang.de: 'Gesundheit', AppLang.en: 'Health'},
       'stamina': {AppLang.de: 'Ausdauer', AppLang.en: 'Stamina'},
@@ -445,6 +460,15 @@ class _SideQuestHomeState extends State<SideQuestHome>
       'skills': {AppLang.de: 'Fähigkeiten', AppLang.en: 'Skills'},
       'dailyQuest': {AppLang.de: 'Daily Quest', AppLang.en: 'Daily Quest'},
       'dailyIn': {AppLang.de: 'in', AppLang.en: 'in'},
+      'mothman': {AppLang.de: '🦋 Mottenmann', AppLang.en: '🦋 Mothman'},
+      'mothmanDesc': {
+        AppLang.de: 'Lege das Handy von 20:00 bis 08:00 mit dem Display nach unten in einen dunklen Raum. Bewege es nicht für 8 Stunden.',
+        AppLang.en: 'Place your phone face down in a dark room from 8pm to 8am. Do not move it for 8 hours.'
+      },
+      'mothmanReward': {
+        AppLang.de: 'Belohnung: ❤️ +50 Gesundheit, ⚡ +50 Ausdauer',
+        AppLang.en: 'Reward: ❤️ +50 Health, ⚡ +50 Stamina'
+      },
       'selectQuest': {
         AppLang.de: 'Quest auswählen',
         AppLang.en: 'Choose a quest'
@@ -1049,6 +1073,14 @@ class _SideQuestHomeState extends State<SideQuestHome>
 
     if (accepted != true) return;
 
+    if (!_hasEnoughStats(stamina: 20, health: 10)) {
+      _toast(_lang == AppLang.de
+          ? '❌ Nicht genug Ausdauer oder Gesundheit!'
+          : '❌ Not enough stamina or health!');
+      return;
+    }
+    _spendStats(stamina: 20, health: 10);
+
     if (!mounted) return;
     setState(() {
       pinned.add(Quest.pushups(name: _pushupTitleForLevel(0), startLevel: 0, unlockAt: now));
@@ -1119,7 +1151,25 @@ class _SideQuestHomeState extends State<SideQuestHome>
       ),
     );
 
-    if (accepted != true) return;
+    if (accepted != true) return;if (accepted != true) return;
+
+// Stats Check
+    if (!_hasEnoughStats(stamina: 45)) {
+      _toast(_lang == AppLang.de
+          ? '❌ Nicht genug Ausdauer!'
+          : '❌ Not enough stamina!');
+      return;
+    }
+    _spendStats(stamina: 45);
+
+// ✅ Hunt: erst Screen-Off, dann Adventure+Hunt starten
+    if (huntMedusa) {
+      if (!mounted) return;
+      setState(() => _showCreator = false);
+      _openAdventureArmDialog(hunt: true);
+      return;
+    }
+
 
     // ✅ Hunt: erst Screen-Off, dann Adventure+Hunt starten
     if (huntMedusa) {
@@ -1149,9 +1199,82 @@ class _SideQuestHomeState extends State<SideQuestHome>
     });_saveData(); // NEU
 
   }
+  Future<void> _addMothmanQuest(BuildContext ctx) async {
+    final now = DateTime.now();
+    final hour = now.hour;
+
+    // Nur zwischen 20:00 und 08:00 startbar
+    if (hour < 20 && hour >= 8) {
+      _toast(_lang == AppLang.de
+          ? '🦋 Der Mottenmann kommt erst nach 20:00 Uhr.'
+          : '🦋 The Mothman only comes after 8pm.');
+      return;
+    }
+
+    // Stats Check
+    if (!_hasEnoughStats(health: 20, stamina: 20)) {
+      _toast(_lang == AppLang.de
+          ? '❌ Nicht genug Gesundheit oder Ausdauer!'
+          : '❌ Not enough health or stamina!');
+      return;
+    }
+
+    final accepted = await showDialog<bool>(
+      context: ctx,
+      builder: (c) => AlertDialog(
+        title: Text(tr('mothman'), softWrap: false),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(tr('mothmanDesc')),
+            const SizedBox(height: 12),
+            Text(tr('mothmanReward'),
+                style: const TextStyle(fontWeight: FontWeight.w700)),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(c, false),
+              child: Text(tr('cancel'), softWrap: false)),
+          FilledButton(
+              onPressed: () => Navigator.pop(c, true),
+              child: Text(tr('startQuest'), softWrap: false)),
+        ],
+      ),
+    );
+
+    if (accepted != true) return;
+
+    _spendStats(health: 20, stamina: 20);
+
+    // End time = nächster 08:00
+    final end = DateTime(now.year, now.month, now.day + 1, 8, 0);
+
+    if (!mounted) return;
+    setState(() {
+      pinned.add(Quest.mothman(
+        name: _lang == AppLang.de ? '🦋 Mottenmann' : '🦋 Mothman',
+        start: now,
+        end: end,
+      ));
+      _showCreator = false;
+    });
+    _saveData();
+  }
+
 
   void _openMedusaInfoDialog() {
     if (MedusaService.activeClassicMedusaOrNull(pinned) != null) return;
+
+
+// Stats Check
+    if (!_hasEnoughStats(health: 75, mana: 50)) {
+      _toast(_lang == AppLang.de
+          ? '❌ Nicht genug Gesundheit oder Mana!'
+          : '❌ Not enough health or mana!');
+      return;
+    }
+    _spendStats(health: 75, mana: 50);
 
     _awaitingMedusaArm = true;
     _medusaDialogOpen = true;
@@ -1416,6 +1539,9 @@ class _SideQuestHomeState extends State<SideQuestHome>
               q.name = localizedMedusa();
             }
             // hunt stays "🐍 Medusa Hunt"
+            break;
+          case QuestType.mothman:
+            q.name = _lang == AppLang.de ? '🦋 Mottenmann' : '🦋 Mothman';
             break;
         }
       }
@@ -1742,7 +1868,10 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                             children: [
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: () => setState(() => _showCreator = !_showCreator),
+                                  onPressed: () => setState(() {
+                                    _showCreator = !_showCreator;
+                                    if (_showCreator) _showCharacter = false; // NEU
+                                  }),
                                   style: _stdBtn(),
                                   child: Text(
                                     _showCreator ? '${tr('newQuest')} ▾' : '${tr('newQuest')} ▸',
@@ -1757,7 +1886,10 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                               const SizedBox(width: 6),
                               Expanded(
                                 child: FilledButton(
-                                  onPressed: () => setState(() => _showCharacter = !_showCharacter),
+                                  onPressed: () => setState(() {
+                                    _showCharacter = !_showCharacter;
+                                    if (_showCharacter) _showCreator = false; // NEU
+                                  }),
                                   style: _stdBtn(),
                                   child: Text(
                                     _showCharacter ? '${tr('character')} ▾' : '${tr('character')} ▸',
@@ -1802,16 +1934,12 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                                     Text(tr('selectQuest'),
                                         style: Theme.of(context).textTheme.titleMedium),
                                     const SizedBox(height: 10),
-                                    FilledButton(
-                                      onPressed: () => _addReadingQuest(context),
-                                      style: _stdBtn(),
-                                      child: _btnText(tr('bookReading')),
-                                    ),
+
                                     const SizedBox(height: 8),
                                     FilledButton(
-                                      onPressed: () => _addPushupQuest(context),
+                                      onPressed: () => _addMothmanQuest(context),
                                       style: _stdBtn(),
-                                      child: _btnText(tr('pushups')),
+                                      child: _btnText(tr('mothman')),
                                     ),
                                     const SizedBox(height: 8),
                                     FilledButton(
@@ -1826,7 +1954,20 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                                         style: _stdBtn(),
                                         child: _btnText(tr('medusa')),
                                       ),
-                                  ],
+                                    const SizedBox(height: 8),
+                                    FilledButton(
+                                      onPressed: () => _addPushupQuest(context),
+                                      style: _stdBtn(),
+                                      child: _btnText(tr('pushups')),
+                                    ),
+
+                                    const SizedBox(height: 8),
+                                    FilledButton(
+                                      onPressed: () => _addReadingQuest(context),
+                                      style: _stdBtn(),
+                                      child: _btnText(tr('bookReading')),
+                                    ),
+                                    ],
                                 ),
                               ),
                             ),
@@ -2172,8 +2313,21 @@ final hunt = MedusaService.huntForAdventure(pinned, adventure.id);
         target: q.stepsTarget,
         timeLeft: _fmtDurationClock(remain),
       );
+       } else if (q.type == QuestType.mothman) {
+    final now = DateTime.now();
+    final remain = q.endAt != null && now.isBefore(q.endAt!)
+    ? q.endAt!.difference(now)
+        : Duration.zero;
+    final total = q.endAt != null && q.startAt != null
+    ? q.endAt!.difference(q.startAt!)
+        : const Duration(hours: 8);
+    final elapsed = (total - remain).inSeconds.toDouble().clamp(0, total.inSeconds.toDouble());
+    pct = (elapsed / total.inSeconds.toDouble()).clamp(0.0, 1.0);
+    subtitle = Text(q.failed
+    ? '❌ ${tr('failedLabel')}'
+        : '🦋 ${tr('timeLeft')}: ${_fmtDurationClock(remain)}');
     } else {
-      // Medusa (classic or hunt)
+         // Medusa (classic or hunt)
       final remain = q.endAt != null && now.isBefore(q.endAt!) ? q.endAt!.difference(now) : Duration.zero;
       final total = q.endAt != null && q.startAt != null
           ? q.endAt!.difference(q.startAt!)

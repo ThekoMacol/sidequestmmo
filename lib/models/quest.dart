@@ -1,7 +1,7 @@
 // lib/models/quest.dart
 import 'dart:math';
 
-enum QuestType { reading, pushups, adventure, medusa }
+enum QuestType { reading, pushups, adventure, medusa, mothman }
 
 class Quest {
   final String id;
@@ -143,6 +143,33 @@ class Quest {
         unlockAt = null,
         done = false,
         finishedAt = null,
+        failed = false,
+        failReason = null,
+        linkedQuestId = null,
+        bonusGold = 0,
+        bonusAwarded = false;
+
+  Quest.mothman({
+    required this.name,
+    required DateTime start,
+    required DateTime end,
+  })  : id = _uid(),
+        type = QuestType.mothman,
+        totalPages = null,
+        readPages = 0,
+        readingUsesDefaultName = false,
+        level = 0,
+        repsProgress = 0,
+        stepsTarget = 0,
+        stepsProgress = 0,
+        startAt = start,
+        endAt = end,
+        dayKey = DateTime(start.year, start.month, start.day),
+        deviceBaseline = null,
+        unlockAt = null,
+        done = false,
+        finishedAt = null,
+        medusaArmed = false,
         failed = false,
         failReason = null,
         linkedQuestId = null,

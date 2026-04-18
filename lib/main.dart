@@ -279,6 +279,9 @@ class _SideQuestHomeState extends State<SideQuestHome>
       completed.clear();
       pinned.addAll(pinnedRaw.map((s) => Quest.fromJson(jsonDecode(s))));
       completed.addAll(completedRaw.map((s) => Quest.fromJson(jsonDecode(s))));
+      // Nach den pinned/completed addAll Zeilen:
+      print('Loaded pinned: ${pinned.length} quests');
+      print('Loaded completed: ${completed.length} quests');
     });
   }
 
@@ -736,6 +739,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
         _awaitingMedusaArm = false;
         _popMedusaDialogOnResume = true;
       });
+      _saveData(); // NEU
       return;
     }
 
@@ -997,6 +1001,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
       ));
       _showCreator = false;
     });
+    _saveData(); // NEU
   }
 
   Future<void> _addPushupQuest(BuildContext ctx) async {
@@ -1031,6 +1036,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
       _lastPushupAcceptAt = now;
       _showCreator = false;
     });
+    _saveData(); // NEU
   }
 
   // ✅ FIXED: Adventure ohne Hunt startet normal, nur Hunt verlangt Screen-Off
@@ -1121,7 +1127,8 @@ class _SideQuestHomeState extends State<SideQuestHome>
       );
       pinned.add(adventure);
       _showCreator = false;
-    });
+    });_saveData(); // NEU
+
   }
 
   void _openMedusaInfoDialog() {

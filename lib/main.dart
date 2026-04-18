@@ -221,6 +221,53 @@ class _SideQuestHomeState extends State<SideQuestHome>
   bool _pushupCounting = false;
   String? _pushupQuestIdRunning; // ✅ welche Pushup-Quest zählt gerade?
 
+  //Save and Load
+  Future<void> _saveData() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('gold', gold);
+    prefs.setInt('appLevel', appLevel);
+    prefs.setDouble('appXp', appXp);
+    prefs.setDouble('appXpNeeded', appXpNeeded);
+    prefs.setInt('scholarPoints', scholarPoints);
+    prefs.setInt('athletePoints', athletePoints);
+    prefs.setInt('adventurerPoints', adventurerPoints);
+    prefs.setBool('xpBarGreen', _xpBarGreen);
+    prefs.setBool('destinyStyle', _destinyStyle);
+    prefs.setBool('destinyPurchased', _destinyPurchased);
+    prefs.setInt('lang', _lang.index);
+    if (_lastPushupAcceptAt != null) {
+      prefs.setInt('lastPushupAcceptAt', _lastPushupAcceptAt!.millisecondsSinceEpoch);
+    }
+    if (_lastDailyClaimAt != null) {
+      prefs.setInt('lastDailyClaimAt', _lastDailyClaimAt!.millisecondsSinceEpoch);
+    }
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      gold = prefs.getInt('gold') ?? 0;
+      appLevel = prefs.getInt('appLevel') ?? 1;
+      appXp = prefs.getDouble('appXp') ?? 0.0;
+      appXpNeeded = prefs.getDouble('appXpNeeded') ?? 60.0;
+      scholarPoints = prefs.getInt('scholarPoints') ?? 0;
+      athletePoints = prefs.getInt('athletePoints') ?? 0;
+      adventurerPoints = prefs.getInt('adventurerPoints') ?? 0;
+      _xpBarGreen = prefs.getBool('xpBarGreen') ?? false;
+      _destinyStyle = prefs.getBool('destinyStyle') ?? false;
+      _destinyPurchased = prefs.getBool('destinyPurchased') ?? false;
+      final langIndex = prefs.getInt('lang') ?? 0;
+      _lang = AppLang.values[langIndex];
+      final pushupMs = prefs.getInt('lastPushupAcceptAt');
+      if (pushupMs != null) {
+        _lastPushupAcceptAt = DateTime.fromMillisecondsSinceEpoch(pushupMs);
+      }
+      final dailyMs = prefs.getInt('lastDailyClaimAt');
+      if (dailyMs != null) {
+        _lastDailyClaimAt = DateTime.fromMillisecondsSinceEpoch(dailyMs);
+      }
+    });
+  }
 
   //Push up Sensor
   Future<void> _startPushupSensorForQuest(Quest q) async {
@@ -537,6 +584,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadData();
     _ensureActivityPermission().then((_) {
       _subscribePedometer();
     });
@@ -829,6 +877,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
         appXp = min(appXp, appXpNeeded);
       }
     });
+    _saveData();
   }
 
   void _toast(String msg) {
@@ -1192,13 +1241,15 @@ class _SideQuestHomeState extends State<SideQuestHome>
       pinned.removeWhere((e) => e.id == q.id);
       completed.insert(0, q);
       if (giveGold) gold += 1;
-    });
 
+
+    });
     if (giveGold) {
       _toast(_lang == AppLang.de
           ? '🎉 Quest erledigt: ${q.name} (+1${tr('gold')})'
           : '🎉 Quest completed: ${q.name} (+1${tr('gold')})');
     }
+    _saveData(); // NEU
   }
 
   void _failQuest(Quest q, {String? reason}) {
@@ -1361,12 +1412,12 @@ class _SideQuestHomeState extends State<SideQuestHome>
                 gold += _dailyRewardGold;
                 _lastDailyClaimAt = DateTime.now();
               });
+              _saveData(); // NEU
               Navigator.pop(c);
               _toast('${tr('dailyRewardToast')}${_dailyRewardGold}${tr('gold')}');
             }
           });
         }
-
         return StatefulBuilder(
           builder: (context, setLocal) {
             return AlertDialog(

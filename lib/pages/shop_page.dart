@@ -41,6 +41,8 @@ class ShopPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isNight = DateTime.now().hour >= 21 || DateTime.now().hour < 6;
+
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         if ((details.primaryVelocity ?? 0) > 200) Navigator.pop(context);
@@ -48,7 +50,7 @@ class ShopPage extends StatelessWidget {
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0805),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF0A0805),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios,
@@ -66,135 +68,136 @@ class ShopPage extends StatelessWidget {
           ),
           centerTitle: true,
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            children: [
-
-              // ── Hero Badge ──
-              Center(
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFC9A84C).withOpacity(0.35),
-                        blurRadius: 30,
-                        spreadRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Image.asset(
-                    'assets/icons/Shop.png',
-                    width: 140,
-                    height: 140,
-                    fit: BoxFit.contain,
-                  ),
-                ),
+        extendBodyBehindAppBar: true,
+        body: Stack(
+          children: [
+            // ── Background ──
+            Positioned.fill(
+              child: Image.asset(
+                isNight
+                    ? 'assets/images/bg_shop_night.png'
+                    : 'assets/images/bg_shop_day.png',
+                fit: BoxFit.cover,
               ),
-              const SizedBox(height: 16),
-
-              // ── Gold Counter ──
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C1610),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFFC9A84C).withOpacity(0.4),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            ),
+            // ── Content ──
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
                   children: [
+
+                    // ── Gold Counter ──
                     Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          center: Alignment(-0.3, -0.3),
-                          colors: [Color(0xFFFFD86B), Color(0xFFB8860B)],
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1C1610).withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFC9A84C).withOpacity(0.4),
                         ),
                       ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                center: Alignment(-0.3, -0.3),
+                                colors: [
+                                  Color(0xFFFFD86B),
+                                  Color(0xFFB8860B)
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$gold ${_tr(lang, 'gold')}',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFC9A84C),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '$gold ${_tr(lang, 'gold')}',
-                      style: GoogleFonts.cinzel(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFC9A84C),
+                    const SizedBox(height: 16),
+
+                    // ── Green XP Bar ──
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: paperColor.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: paperBorder, width: 2),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _tr(lang, 'greenXpTitle'),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          FilledButton(
+                            onPressed: xpBarGreen || gold < 10
+                                ? null
+                                : onBuyGreenXp,
+                            child: Text(
+                              xpBarGreen
+                                  ? '✓'
+                                  : '${_tr(lang, 'buy')} (10)',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // ── Destiny Style ──
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: paperColor.withOpacity(0.85),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: paperBorder, width: 2),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _tr(lang, 'destinyTitle'),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          FilledButton(
+                            onPressed: (!destinyPurchased && gold < 20)
+                                ? null
+                                : onToggleDestiny,
+                            child: Text(
+                              !destinyPurchased
+                                  ? '${_tr(lang, "buy")} (20)'
+                                  : (destinyStyle
+                                  ? _tr(lang, 'off')
+                                  : _tr(lang, 'on')),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // ── Green XP Bar ──
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: paperColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: paperBorder, width: 2),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _tr(lang, 'greenXpTitle'),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    FilledButton(
-                      onPressed:
-                      xpBarGreen || gold < 10 ? null : onBuyGreenXp,
-                      child: Text(
-                        xpBarGreen ? '✓' : '${_tr(lang, 'buy')} (10)',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // ── Destiny Style ──
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: paperColor,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: paperBorder, width: 2),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _tr(lang, 'destinyTitle'),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    FilledButton(
-                      onPressed: (!destinyPurchased && gold < 20)
-                          ? null
-                          : onToggleDestiny,
-                      child: Text(
-                        !destinyPurchased
-                            ? '${_tr(lang, "buy")} (20)'
-                            : (destinyStyle
-                            ? _tr(lang, 'off')
-                            : _tr(lang, 'on')),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

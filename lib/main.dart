@@ -1612,17 +1612,19 @@ class _SideQuestHomeState extends State<SideQuestHome>
     foregroundColor: const Color(0xFFC9A84C),
     side: const BorderSide(color: Color(0xFFC9A84C), width: 1),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    textStyle: GoogleFonts.cinzel(fontSize: 13, fontWeight: FontWeight.w600,
-        letterSpacing: 0.5),
+    textStyle: GoogleFonts.cinzel(fontSize: 10, fontWeight: FontWeight.w600,
+        letterSpacing: 0.3, height: 1.3),
   );
 
   ButtonStyle _dailyButtonStyle({required bool disabled}) => _stdBtn().copyWith(
-    foregroundColor: WidgetStateProperty.all(Colors.white),
-    backgroundColor: WidgetStateProperty.all(
-      disabled ? const Color(0xFF5A1A1A) : const Color(0xFF1A4A2A),
+    foregroundColor: WidgetStateProperty.all(
+      disabled ? const Color(0xFF5A5040) : const Color(0xFFC9A84C),
     ),
+    backgroundColor: WidgetStateProperty.all(const Color(0xFF1C1610)),
     side: WidgetStateProperty.all(BorderSide(
-      color: disabled ? const Color(0xFFE06060) : const Color(0xFF4A8A5A),
+      color: disabled
+          ? const Color(0xFF3A3020).withOpacity(0.5)
+          : const Color(0xFFC9A84C),
     )),
   );
 
@@ -1678,9 +1680,15 @@ class _SideQuestHomeState extends State<SideQuestHome>
 
     final dailyRemaining = _remainingFrom(_lastDailyClaimAt, _dailyCooldown);
     final dailyDisabled = dailyRemaining > Duration.zero;
-    final dailyLabel = dailyDisabled
-        ? '${tr('dailyQuest')} (${tr('dailyIn')} ${_fmtShort(dailyRemaining)})'
-        : tr('dailyQuest');
+    String dailyLabel;
+    if (dailyDisabled) {
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day + 1);
+      final untilMidnight = midnight.difference(now);
+      dailyLabel = _fmtDurationClock(untilMidnight);
+    } else {
+      dailyLabel = tr('dailyQuest');
+    }
 
 final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
 
@@ -1748,12 +1756,15 @@ final hasActiveMedusa = MedusaService.activeClassicMedusaOrNull(pinned) != null;
                                   onPressed: dailyDisabled ? null : _openDailyQuest,
                                   style: _dailyButtonStyle(disabled: dailyDisabled),
                                   child: Text(
-                                    dailyDisabled ? tr('dailyQuest') : tr('dailyQuest'),
+                                    dailyLabel,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     textAlign: TextAlign.center,
-                                    style: GoogleFonts.cinzel(fontSize: 10, fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.3),
+                                    style: GoogleFonts.cinzel(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
                                 ),
                               ),

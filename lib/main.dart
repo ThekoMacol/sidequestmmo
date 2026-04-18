@@ -1272,6 +1272,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
       scholarPoints = min(100, scholarPoints + 1);
       _gainAppXp(15);
       _finishQuest(q);
+      _saveData(); // explizit nochmal aufrufen
     }
   }
 
@@ -1300,6 +1301,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
           : '💪 Level cleared!');
 
       _finishQuest(q);
+      _saveData();
 
       final nextLevel = q.level + 1;
       if (nextLevel < 100) {
@@ -1348,6 +1350,7 @@ class _SideQuestHomeState extends State<SideQuestHome>
     }
 
     _finishQuest(q, giveGold: true);
+    _saveData();
   }
 
 
